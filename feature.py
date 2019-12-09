@@ -75,9 +75,9 @@ def coupon(df):
     df['weekday']=df['dtr'].apply(weekday)
     df['weekday_type']=df['weekday'].apply(weekday_type)
     weekdaycols=['weeday_'+str(i) for i in range(1,8)]
-    tmpdf=pd.get_dummies(df['weekday'].replace(-1,np.nan))
+    tmpdf=pd.get_dummies(df['weekday'].replace(-1,np.nan))#获取独热码
     tmpdf.columns=weekdaycols
-    df[weekdaycols]=tmpdf
+    df[weekdaycols]=tmpdf #已经有独热码了，这里就将这个特征删去
     df=df.drop(['weekday'],axis=1)
     return df
 
@@ -86,26 +86,35 @@ def coupon(df):
 def cal_rate(x,y):
     return x/y
 def user_coupon(df):
+    #新建一个df以便后面将特征merge到一起，并且uid不重复
     res=df[['uid']].drop_duplicates(subset='uid',keep='first')
+    #提取用户总共收到的优惠券总数
     t0=df[['uid','dtr']]
     t0=t0[(t0.dtr>'0')]
+    #使用先将date_received联合再分割获取日期个数的方法
     t0=t0.groupby(['uid'])['dtr'].agg(lambda x:':'.join(x)).reset_index()
     t0['received_number']=t0.dtr.apply(lambda s:len(s.split(':')))
     res=pd.merge(res,t0[['uid','received_number']],on='uid',how='left')
     
+    #获取用户收到的优惠券的总数
     t1=df[['uid','dtr','dt']]
     t1=t1[(t1.dtr>'0')&(t1.dt>'0')]
     t1=t1.groupby(['uid'])['dtr'].agg(lambda x:':'.join(x)).reset_index()
     t1['used_number']=t1.dtr.apply(lambda s:len(s.split(':')))
     res=pd.merge(res,t1[['uid','used_number']],on=['uid'],how='left')
+    
     res['used_rate']=res.apply(lambda x:cal_rate(x['used_number'],x['received_number']),axis=1)
+    
+    #获取最大距离
     t1=df[['uid','dtr','dt','dist']]
     t1=t1[(t1.dtr>'0')&(t1.dt>'0')]
     t1=t1.groupby('uid')['dist'].max().reset_index()
+    #需要reset_index才可以将其转换成df格式
     t1.rename(columns={'dist':'max_dist'}, inplace = True)
     res=pd.merge(res,t1[['uid','max_dist']],on=['uid'],how='left')
+    #对于没有的数据，例如收到的优惠券数量为0，由于没有处理，所以原处为nan
     res.fillna(0,inplace=True)
-    res.to_csv('data/user_coupon.csv',index=None)
+    #res.to_csv('data/user_coupon.csv',index=None)
     return res
 
 
