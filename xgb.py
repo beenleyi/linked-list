@@ -37,7 +37,7 @@ params={'booster':'gbtree',
 	    }
 
 watchlist = [(dataset12,'train')]
-model = xgb.train(params,dataset12,num_boost_round=10,evals=watchlist)
+model = xgb.train(params,dataset12,num_boost_round=3500,evals=watchlist)
 
 #predict test set
 dataset3_preds['label'] = model.predict(dataset3)
