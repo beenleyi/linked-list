@@ -190,6 +190,7 @@ def give_label(df):
     df['label']=df.apply(label,axis=1)
     return df
 
+#此处只有一个dataset产生的代码，因为在实际中为了避免内存使用过大，通过更改变量名运行三次，得到三个数据集
 dataset1 = off_test
 feature1 = off_train[((off_train.dt>='20160315')&(off_train.dt<='20160630'))|((off_train.dt=='null')&(off_train.dtr>='20160315')&(off_train.dtr<='20160630'))]
 
